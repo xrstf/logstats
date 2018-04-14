@@ -72,7 +72,5 @@ func main() {
 	}
 
 	formatter := output.NewJSONFormatter()
-
-	fmt.Printf("%#v\n", stats)
-	fmt.Printf("%s\n", formatter.Format(stats))
+	fmt.Println(formatter.Format(stats))
 }

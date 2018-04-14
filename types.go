@@ -1,6 +1,7 @@
 package logstats
 
 import (
+	"regexp"
 	"time"
 )
 
@@ -36,9 +37,25 @@ func NewStats() *LogStats {
 	}
 }
 
+var (
+	queryStringSep = regexp.MustCompile(`[?&].*$`)
+	assetFile      = regexp.MustCompile(`\.(html|htm|png|jpeg|jpg|gif|gifv|ico|css|js|less|sass|mp3|mp4)$`)
+)
+
 func (s *LogStats) Count(line *LogLine) {
 	s.TotalHits++
 	s.TotalSize += line.Size
+
+	// strip query string
+	uri := queryStringSep.ReplaceAllString(line.Uri, "")
+
+	if assetFile.MatchString(uri) {
+		s.AssetHits++
+		s.AssetSize += line.Size
+	} else {
+		s.DynamicHits++
+		s.DynamicSize += line.Size
+	}
 
 	if _, ok := s.StatusHits[line.Status]; !ok {
 		s.StatusHits[line.Status] = 0
