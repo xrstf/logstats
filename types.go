@@ -39,7 +39,7 @@ func NewStats() *LogStats {
 
 var (
 	queryStringSep = regexp.MustCompile(`[?&].*$`)
-	assetFile      = regexp.MustCompile(`\.(html|htm|png|jpeg|jpg|gif|gifv|ico|css|js|less|sass|mp3|mp4)$`)
+	assetFile      = regexp.MustCompile(`\.(html|htm|png|jpeg|jpg|gif|gifv|ico|css|js|less|sass|mp3|mp4|txt|svg|ttf|otf|woff)$`)
 )
 
 func (s *LogStats) Count(line *LogLine) {
