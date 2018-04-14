@@ -58,17 +58,13 @@ func main() {
 			continue
 		}
 
-		// too early
-		if !line.Date.After(start) {
+		// not in range (do not exit when reaching the end of the range, because
+		// logs might not be in perfect chronological order)
+		if !line.Date.After(start) || line.Date.After(end) {
 			continue
 		}
 
 		stats.Count(line)
-
-		// reached end of range
-		if line.Date.After(end) {
-			break
-		}
 	}
 
 	if err := scanner.Err(); err != nil {
