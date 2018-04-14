@@ -49,29 +49,21 @@ func NewNginxParser() *nginxParser {
 func (s *nginxParser) ParseLine(line string) (*logstats.LogLine, error) {
 	match := s.lineRegex.FindStringSubmatch(line)
 	if match == nil {
-		fmt.Println(line)
-		panic("foo")
 		return nil, nginxInvalidLine
 	}
 
 	parsed, err := time.Parse("02/Jan/2006:15:04:05 -0700", match[2])
 	if err != nil {
-		fmt.Println(line)
-		panic(err)
 		return nil, nginxInvalidLine
 	}
 
 	statusCode, err := strconv.ParseInt(match[6], 10, 16)
 	if err != nil {
-		fmt.Println(line)
-		panic(err)
 		return nil, nginxInvalidLine
 	}
 
 	size, err := strconv.ParseInt(match[7], 10, 64)
 	if err != nil {
-		fmt.Println(line)
-		panic(err)
 		return nil, nginxInvalidLine
 	}
 

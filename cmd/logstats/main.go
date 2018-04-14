@@ -16,6 +16,7 @@ import (
 
 var (
 	rangeFlag = flag.String("range", "1m", "time range to scan")
+	readFlag  = flag.Int("read", 0, "MiB to read from the end of the file (speeds up reading huge logs)")
 )
 
 func main() {
@@ -42,6 +43,31 @@ func main() {
 	}
 	defer file.Close()
 
+	skipFirstLine := false
+
+	if *readFlag > 0 {
+		info, err := file.Stat()
+		if err != nil {
+			log.Fatalf("Failed to stat file: %v", err)
+		}
+
+		totalSize := info.Size()
+		jumpTo := totalSize - int64(*readFlag*(1024*1024))
+
+		if jumpTo > 0 {
+			log.Printf("File is %d KiB in total, seeking to offset %d KiB.", totalSize/1024, jumpTo/1024)
+
+			_, err = file.Seek(jumpTo, 0)
+			if err != nil {
+				log.Fatalf("Failed to seek to offset %d in file: %v", jumpTo, err)
+			}
+
+			skipFirstLine = true
+		} else {
+			log.Printf("File is %d KiB in total (smaller than -read size). Not seeking anywhere.", totalSize/1024)
+		}
+	}
+
 	parser := parser.NewNginxParser()
 	stats := logstats.NewStats()
 
@@ -49,6 +75,10 @@ func main() {
 	lineNumber := 0
 	for scanner.Scan() {
 		lineNumber++
+
+		if skipFirstLine && lineNumber == 1 {
+			continue
+		}
 
 		l := strings.TrimSpace(scanner.Text())
 
