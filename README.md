@@ -23,6 +23,40 @@ behind a reverse proxy.
 To run, copy the `config.dist.yaml`, adjust to your needs and fire away:
 
     $ ./logstats myconfig.yaml access.log
+    2018/04/16 15:14:23 Range start: 2018-04-16 05:14:23
+    2018/04/16 15:14:23 Range end:   2018-04-16 15:14:23
+    {
+      "hits": {
+        "fonts": 0,
+        "images": 0,
+        "media": 0,
+        "robots": 9450,
+        "styles": 0,
+        "total": 669375
+      },
+      "traffic": {
+        "fonts": 0,
+        "images": 0,
+        "media": 0,
+        "robots": 982800,
+        "styles": 0,
+        "total": 7976381175
+      },
+      "status": {
+        "200": 612675,
+        "301": 44100,
+        "304": 12600
+      },
+      "methods": {
+        "GET": 669375
+      },
+      "protocols": {
+        "HTTP/1.0": 582750,
+        "HTTP/1.1": 81900,
+        "HTTP/2.0": 4725
+      },
+      "uniqueIPs": 28
+    }
 
 Make sure to pipe the log output (stderr) away to only process the resulting
 JSON on stdout.
