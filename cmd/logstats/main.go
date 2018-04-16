@@ -55,7 +55,7 @@ func main() {
 		jumpTo := totalSize - int64(*readFlag*(1024*1024))
 
 		if jumpTo > 0 {
-			log.Printf("File is %d KiB in total, seeking to offset %d KiB.", totalSize/1024, jumpTo/1024)
+			log.Printf("File is %d MiB in total, seeking to offset %d MB.", totalSize/(1024*1024), jumpTo/(1024*1024))
 
 			_, err = file.Seek(jumpTo, 0)
 			if err != nil {
@@ -64,7 +64,7 @@ func main() {
 
 			skipFirstLine = true
 		} else {
-			log.Printf("File is %d KiB in total (smaller than -read size). Not seeking anywhere.", totalSize/1024)
+			log.Printf("File is %d MiB in total (smaller than -read size). Not seeking anywhere.", totalSize/(1024*1024))
 		}
 	}
 
