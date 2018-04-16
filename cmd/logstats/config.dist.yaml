@@ -1,0 +1,32 @@
+# time range to count, counting back from the current time
+range: 10h
+
+# number of megabytes to read from the end of the file, if set to nonzero;
+# use this to speed up reading gigantic log files of which you know that
+# only the last N MiB are relevant
+read: 10
+
+# define additional kinds of request types that you would like to count;
+# `uri` is matched agains the entire request URI
+# `file` is matched against the request URI with the query string already stripped
+kinds:
+  media:
+    file: \.(mp3|mp4|mkv)$
+  fonts:
+    file: \.(ttf|otf|woff)$
+  styles:
+    file: \.(css|less|sass)$
+  images:
+    file: \.(svg|jpeg|jpg|gif|gifv|ico)$
+  api:
+    uri: ^/api/
+
+# exclude lines from counting entirely, for example to exclude monitoring tools
+exclude:
+  ips:
+    - 1.2.3.4
+    - 127.0.0.1
+  files:
+    - favicon\.ico$
+  uris:
+    - ^/robots\.txt$

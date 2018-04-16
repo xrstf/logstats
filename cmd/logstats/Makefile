@@ -1,7 +1,10 @@
 default: build
 
 build: fix
-	go build -v .
+	go build -v -ldflags '-s -w' .
+
+static: fix
+	go build -v -tags netgo -ldflags '-s -w' .
 
 fix: *.go
 	goimports -l -w .

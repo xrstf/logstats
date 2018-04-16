@@ -13,15 +13,21 @@ type LogLine struct {
 	Protocol string
 	Status   int
 	Size     int64
+
+	filePath string
+}
+
+func (l *LogLine) FilePath() string {
+	if l.filePath == "" {
+		l.filePath = queryStringSep.ReplaceAllString(l.Uri, "")
+	}
+
+	return l.filePath
 }
 
 type LogStats struct {
-	TotalHits    int64
-	TotalSize    int64
-	AssetHits    int64
-	AssetSize    int64
-	DynamicHits  int64
-	DynamicSize  int64
+	Hits         map[string]int64
+	Size         map[string]int64
 	StatusHits   map[int]int64
 	MethodHits   map[string]int64
 	ProtocolHits map[string]int64
@@ -30,6 +36,8 @@ type LogStats struct {
 
 func NewStats() *LogStats {
 	return &LogStats{
+		Hits:         make(map[string]int64),
+		Size:         make(map[string]int64),
 		StatusHits:   make(map[int]int64),
 		MethodHits:   make(map[string]int64),
 		ProtocolHits: make(map[string]int64),
@@ -39,22 +47,29 @@ func NewStats() *LogStats {
 
 var (
 	queryStringSep = regexp.MustCompile(`[?&].*$`)
-	assetFile      = regexp.MustCompile(`\.(html|htm|png|jpeg|jpg|gif|gifv|ico|css|js|less|sass|mp3|mp4|txt|svg|ttf|otf|woff)$`)
 )
 
-func (s *LogStats) Count(line *LogLine) {
-	s.TotalHits++
-	s.TotalSize += line.Size
+func (s *LogStats) Empty(config *Configuration) {
+	s.Hits["total"] = 0
+	s.Size["total"] = 0
 
-	// strip query string
-	uri := queryStringSep.ReplaceAllString(line.Uri, "")
+	for kind := range config.Kinds {
+		s.Hits[kind] = 0
+		s.Size[kind] = 0
+	}
+}
 
-	if assetFile.MatchString(uri) {
-		s.AssetHits++
-		s.AssetSize += line.Size
-	} else {
-		s.DynamicHits++
-		s.DynamicSize += line.Size
+func (s *LogStats) Count(line *LogLine, config *Configuration) {
+	if config.Exclude.Matches(line) {
+		return
+	}
+
+	s.countLine("total", line)
+
+	for kind, cfg := range config.Kinds {
+		if cfg.Matches(line) {
+			s.countLine(kind, line)
+		}
 	}
 
 	if _, ok := s.StatusHits[line.Status]; !ok {
@@ -80,4 +95,18 @@ func (s *LogStats) Count(line *LogLine) {
 	}
 
 	s.IPHits[line.IP]++
+}
+
+func (s *LogStats) countLine(kind string, line *LogLine) {
+	if _, ok := s.Hits[kind]; !ok {
+		s.Hits[kind] = 0
+	}
+
+	s.Hits[kind]++
+
+	if _, ok := s.Size[kind]; !ok {
+		s.Size[kind] = 0
+	}
+
+	s.Size[kind] += line.Size
 }

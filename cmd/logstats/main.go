@@ -2,8 +2,8 @@ package main
 
 import (
 	"bufio"
-	"flag"
 	"fmt"
+	"io/ioutil"
 	"log"
 	"os"
 	"strings"
@@ -12,64 +12,59 @@ import (
 	"github.com/xrstf/logstats"
 	"github.com/xrstf/logstats/output"
 	"github.com/xrstf/logstats/parser"
-)
-
-var (
-	rangeFlag = flag.String("range", "1m", "time range to scan")
-	readFlag  = flag.Int("read", 0, "MiB to read from the end of the file (speeds up reading huge logs)")
+	yaml "gopkg.in/yaml.v2"
 )
 
 func main() {
-	flag.Parse()
-
-	if flag.NArg() == 0 {
-		log.Fatalln("No filename given.")
+	if len(os.Args) < 3 {
+		log.Fatalln("No config file and/or log file given.")
 	}
 
-	timeRange, err := time.ParseDuration(*rangeFlag)
+	/////////////////////////////////////////////////////////////////////////////
+	// setup files and config
+
+	configFile := os.Args[1]
+	logFile := os.Args[2]
+
+	config, err := readConfigFile(configFile)
 	if err != nil {
-		log.Fatalf("Invalid -range flag: %v", err)
+		log.Fatalf("Failed to load configuration: %v", err)
 	}
+
+	/////////////////////////////////////////////////////////////////////////////
+	// prepare range
 
 	end := time.Now()
-	start := end.Add(-timeRange)
+	start := end.Add(-config.Range)
 
 	log.Printf("Range start: %s", start.Format("2006-01-02 15:04:05"))
 	log.Printf("Range end:   %s", end.Format("2006-01-02 15:04:05"))
 
-	file, err := os.Open(flag.Arg(0))
+	file, err := os.Open(logFile)
 	if err != nil {
-		log.Fatalf("Failed to open %s: %v", flag.Arg(0), err)
+		log.Fatalf("Failed to open %s: %v", logFile, err)
 	}
 	defer file.Close()
 
-	skipFirstLine := false
+	/////////////////////////////////////////////////////////////////////////////
+	// seek to file offset
 
-	if *readFlag > 0 {
-		info, err := file.Stat()
-		if err != nil {
-			log.Fatalf("Failed to stat file: %v", err)
-		}
-
-		totalSize := info.Size()
-		jumpTo := totalSize - int64(*readFlag*(1024*1024))
-
-		if jumpTo > 0 {
-			log.Printf("File is %d MiB in total, seeking to offset %d MB.", totalSize/(1024*1024), jumpTo/(1024*1024))
-
-			_, err = file.Seek(jumpTo, 0)
-			if err != nil {
-				log.Fatalf("Failed to seek to offset %d in file: %v", jumpTo, err)
-			}
-
-			skipFirstLine = true
-		} else {
-			log.Printf("File is %d MiB in total (smaller than -read size). Not seeking anywhere.", totalSize/(1024*1024))
-		}
+	skipFirstLine, err := seekToFileOffset(file, config)
+	if err != nil {
+		log.Fatalln(err)
 	}
+
+	/////////////////////////////////////////////////////////////////////////////
+	// setup parsing logic
 
 	parser := parser.NewNginxParser()
 	stats := logstats.NewStats()
+
+	config.Compile()
+	stats.Empty(config)
+
+	/////////////////////////////////////////////////////////////////////////////
+	// here we go
 
 	scanner := bufio.NewScanner(file)
 	lineNumber := 0
@@ -94,7 +89,7 @@ func main() {
 			continue
 		}
 
-		stats.Count(line)
+		stats.Count(line, config)
 	}
 
 	if err := scanner.Err(); err != nil {
@@ -103,4 +98,43 @@ func main() {
 
 	formatter := output.NewJSONFormatter()
 	fmt.Println(formatter.Format(stats))
+}
+
+func readConfigFile(filename string) (*logstats.Configuration, error) {
+	content, err := ioutil.ReadFile(filename)
+	if err != nil {
+		return nil, err
+	}
+
+	config := &logstats.Configuration{}
+	err = yaml.Unmarshal(content, config)
+
+	return config, nil
+}
+
+func seekToFileOffset(file *os.File, config *logstats.Configuration) (bool, error) {
+	if config.Read > 0 {
+		info, err := file.Stat()
+		if err != nil {
+			return false, fmt.Errorf("Failed to stat file: %v", err)
+		}
+
+		totalSize := info.Size()
+		jumpTo := totalSize - int64(config.Read*(1024*1024))
+
+		if jumpTo > 0 {
+			log.Printf("File is %d MiB in total, seeking to offset %d MB.", totalSize/(1024*1024), jumpTo/(1024*1024))
+
+			_, err = file.Seek(jumpTo, 0)
+			if err != nil {
+				err = fmt.Errorf("Failed to seek to offset %d in file: %v", jumpTo, err)
+			}
+
+			return true, err
+		}
+
+		log.Printf("File is %d MiB in total (smaller than configured tail size). Not seeking anywhere.", totalSize/(1024*1024))
+	}
+
+	return false, nil
 }

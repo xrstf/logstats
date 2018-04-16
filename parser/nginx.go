@@ -10,19 +10,6 @@ import (
 	"github.com/xrstf/logstats"
 )
 
-/*
-172.19.0.1 - - [02/Apr/2018:12:08:33 +0000] "GET / HTTP/1.1" 200 1043 "-" "curl/7.52.1" "-"
-172.19.0.1 - - [02/Apr/2018:12:08:34 +0000] "GET / HTTP/1.1" 200 1043 "-" "curl/7.52.1" "-"
-172.19.0.1 - - [02/Apr/2018:12:08:36 +0000] "GET /foo HTTP/1.1" 200 1043 "-" "curl/7.52.1" "-"
-172.19.0.1 - - [02/Apr/2018:12:08:39 +0000] "GET /robots.txt HTTP/1.1" 200 84 "-" "curl/7.52.1" "-"
-172.19.0.1 - - [02/Apr/2018:12:13:28 +0000] "GET /robots.txt HTTP/1.1" 200 84 "-" "curl/7.52.1" "-"
-172.19.0.1 - - [02/Apr/2018:12:13:30 +0000] "GET /foo HTTP/1.1" 200 1211 "-" "curl/7.52.1" "-"
-172.19.0.6 - - [02/Apr/2018:17:38:21 +0000] "GET / HTTP/1.0" 200 1189 "-" "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:59.0) Gecko/20100101 Firefox/59.0" "-"
-172.19.0.6 - - [02/Apr/2018:17:38:21 +0000] "GET /favicon.ico HTTP/1.0" 200 15086 "-" "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:59.0) Gecko/20100101 Firefox/59.0" "-"
-172.19.0.6 - - [02/Apr/2018:17:38:21 +0000] "GET /favicon.ico HTTP/1.0" 200 15086 "-" "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:59.0) Gecko/20100101 Firefox/59.0" "-"
-172.19.0.6 - - [02/Apr/2018:17:38:24 +0000] "GET / HTTP/1.0" 200 1189 "-" "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:59.0) Gecko/20100101 Firefox/59.0" "-"
-*/
-
 var nginxInvalidLine = errors.New("Could not parse log line")
 
 type nginxParser struct {

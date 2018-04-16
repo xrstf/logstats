@@ -13,15 +13,9 @@ func NewJSONFormatter() *jsonFormatter {
 }
 
 func (f *jsonFormatter) Format(stats *logstats.LogStats) string {
-	type typeOutput struct {
-		Total   int64 `json:"total"`
-		Assets  int64 `json:"assets"`
-		Dynamic int64 `json:"dynamic"`
-	}
-
 	type output struct {
-		Hits      typeOutput       `json:"hits"`
-		Traffic   typeOutput       `json:"traffic"`
+		Hits      map[string]int64 `json:"hits"`
+		Traffic   map[string]int64 `json:"traffic"`
 		Status    map[int]int64    `json:"status"`
 		Methods   map[string]int64 `json:"methods"`
 		Protocols map[string]int64 `json:"protocols"`
@@ -29,16 +23,8 @@ func (f *jsonFormatter) Format(stats *logstats.LogStats) string {
 	}
 
 	out := output{
-		Hits: typeOutput{
-			Total:   stats.TotalHits,
-			Assets:  stats.AssetHits,
-			Dynamic: stats.DynamicHits,
-		},
-		Traffic: typeOutput{
-			Total:   stats.TotalSize,
-			Assets:  stats.AssetSize,
-			Dynamic: stats.DynamicSize,
-		},
+		Hits:      stats.Hits,
+		Traffic:   stats.Size,
 		Status:    stats.StatusHits,
 		Methods:   stats.MethodHits,
 		Protocols: stats.ProtocolHits,
