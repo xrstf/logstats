@@ -34,13 +34,11 @@ type ExcludeConfig struct {
 
 func (c *ExcludeConfig) Compile() {
 	c.uriRegexes = make([]*regexp.Regexp, len(c.UriPatterns))
-
 	for idx, pattern := range c.UriPatterns {
 		c.uriRegexes[idx] = regexp.MustCompile(pattern)
 	}
 
 	c.fileRegexes = make([]*regexp.Regexp, len(c.FilePatterns))
-
 	for idx, pattern := range c.FilePatterns {
 		c.fileRegexes[idx] = regexp.MustCompile(pattern)
 	}
@@ -84,16 +82,12 @@ func (c *KindConfig) Compile() {
 }
 
 func (c *KindConfig) Matches(line *LogLine) bool {
-	if c.UriPattern != "" {
-		if c.uriRegex.MatchString(line.Uri) {
-			return true
-		}
+	if c.UriPattern != "" && c.uriRegex.MatchString(line.Uri) {
+		return true
 	}
 
-	if c.FilePattern != "" {
-		if c.fileRegex.MatchString(line.FilePath()) {
-			return true
-		}
+	if c.FilePattern != "" && c.fileRegex.MatchString(line.FilePath()) {
+		return true
 	}
 
 	return false

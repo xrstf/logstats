@@ -33,7 +33,7 @@ If you're using a custom nginx log format, this will not work for you without
 adjusting the code base.
 
 The code is probably not the most efficient. Make sure to use the `read` parameter
-in the config file accordingly. Reading a 500MB log file that something around
+in the config file accordingly. Reading a 500MB log file is somewhere around
 20 seconds, but is relatively memory efficient (using less than 10 MB).
 
 ## License
