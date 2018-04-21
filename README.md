@@ -16,8 +16,9 @@ behind a reverse proxy.
 ## How?
 
 1. Clone the repository
-2. `make` in `cmd/logstats` to compile the binary. Get the required dependencies
-   as needed. Sorry, no vendoring yet.
+2. Run `make deps` to fetch the required dependencies.
+3. To build the app, run `make app`. For a statically compiled version, run
+   `make static`.
 3. Run it.
 
 To run, copy the `config.dist.yaml`, adjust to your needs and fire away:
