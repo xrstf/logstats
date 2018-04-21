@@ -1,6 +1,6 @@
 FROM golang:1.10-alpine as builder
 
-RUN apk add --update make git
+RUN apk add --update make git pcre-dev build-base
 WORKDIR /go/src/github.com/xrstf/logstats/
 COPY . .
 RUN make deps static
