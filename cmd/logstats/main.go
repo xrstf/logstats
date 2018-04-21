@@ -16,6 +16,8 @@ import (
 )
 
 func main() {
+	start := time.Now()
+
 	if len(os.Args) < 3 {
 		log.Fatalln("No config file and/or log file given.")
 	}
@@ -32,13 +34,7 @@ func main() {
 	}
 
 	/////////////////////////////////////////////////////////////////////////////
-	// prepare range
-
-	end := time.Now()
-	start := end.Add(-config.Range)
-
-	log.Printf("Range start: %s", start.Format("2006-01-02 15:04:05"))
-	log.Printf("Range end:   %s", end.Format("2006-01-02 15:04:05"))
+	// open file
 
 	file, err := os.Open(logFile)
 	if err != nil {
@@ -47,11 +43,37 @@ func main() {
 	defer file.Close()
 
 	/////////////////////////////////////////////////////////////////////////////
+	// process file
+
+	stats, err := processFile(file, config, time.Now())
+	if err != nil {
+		log.Fatalln(err)
+	}
+
+	/////////////////////////////////////////////////////////////////////////////
+	// print result
+
+	formatter := output.NewJSONFormatter()
+	fmt.Println(formatter.Format(stats))
+
+	if len(os.Getenv("LOGSTATS_DEBUG")) > 0 {
+		log.Printf("Total time: %s", time.Since(start))
+	}
+}
+
+func processFile(file *os.File, config *logstats.Configuration, now time.Time) (*logstats.LogStats, error) {
+	/////////////////////////////////////////////////////////////////////////////
+	// prepare range
+
+	end := now
+	start := end.Add(-config.Range)
+
+	/////////////////////////////////////////////////////////////////////////////
 	// seek to file offset
 
 	skipFirstLine, err := seekToFileOffset(file, config)
 	if err != nil {
-		log.Fatalln(err)
+		return nil, err
 	}
 
 	/////////////////////////////////////////////////////////////////////////////
@@ -93,11 +115,10 @@ func main() {
 	}
 
 	if err := scanner.Err(); err != nil {
-		log.Fatalf("Failed to read file: %v", err)
+		return stats, fmt.Errorf("Failed to read file: %v", err)
 	}
 
-	formatter := output.NewJSONFormatter()
-	fmt.Println(formatter.Format(stats))
+	return stats, nil
 }
 
 func readConfigFile(filename string) (*logstats.Configuration, error) {
@@ -123,8 +144,6 @@ func seekToFileOffset(file *os.File, config *logstats.Configuration) (bool, erro
 		jumpTo := totalSize - int64(config.Read*(1024*1024))
 
 		if jumpTo > 0 {
-			log.Printf("File is %d MiB in total, seeking to offset %d MB.", totalSize/(1024*1024), jumpTo/(1024*1024))
-
 			_, err = file.Seek(jumpTo, 0)
 			if err != nil {
 				err = fmt.Errorf("Failed to seek to offset %d in file: %v", jumpTo, err)
@@ -132,8 +151,6 @@ func seekToFileOffset(file *os.File, config *logstats.Configuration) (bool, erro
 
 			return true, err
 		}
-
-		log.Printf("File is %d MiB in total (smaller than configured tail size). Not seeking anywhere.", totalSize/(1024*1024))
 	}
 
 	return false, nil
